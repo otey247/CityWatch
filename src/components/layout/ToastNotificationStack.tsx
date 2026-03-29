@@ -52,8 +52,9 @@ export default function ToastNotificationStack() {
 
   // Clear all pending timeouts when the component unmounts
   useEffect(() => {
+    const timeoutIds = timeoutIdsRef.current;
     return () => {
-      for (const id of timeoutIdsRef.current) clearTimeout(id);
+      for (const id of timeoutIds) clearTimeout(id);
     };
   }, []);
 
@@ -75,9 +76,9 @@ export default function ToastNotificationStack() {
         <div
           key={toast.id}
           style={{
-            background: 'var(--bg-panel)',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.12)), var(--bg-panel)',
             border: `1px solid ${TYPE_COLORS[toast.event.type]}`,
-            borderRadius: 6,
+            borderRadius: 0,
             padding: '8px 12px',
             animation: toast.visible ? 'slideIn 0.25s ease' : 'fadeOut 0.4s ease forwards',
             display: 'flex',

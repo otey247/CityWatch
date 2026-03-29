@@ -46,7 +46,7 @@ export default function CommunicationsDrawer() {
     <div style={{
       position: 'absolute',
       inset: 0,
-      background: 'rgba(0,0,0,0.7)',
+      background: 'rgba(10, 8, 5, 0.76)',
       zIndex: 50,
       display: 'flex',
       alignItems: 'flex-end',
@@ -56,25 +56,29 @@ export default function CommunicationsDrawer() {
     >
       <div style={{
         width: '100%',
-        maxWidth: 640,
+        maxWidth: 760,
         background: 'var(--bg-surface)',
-        border: '1px solid var(--border-bright)',
-        borderRadius: '8px 8px 0 0',
+        border: '2px solid var(--border-bright)',
+        borderRadius: 0,
         padding: 0,
-        maxHeight: '70vh',
+        maxHeight: '78vh',
         overflowY: 'auto',
       }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-elevated)' }}>
-          <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: 2 }}>
-            Communications Console
+        <div className="panel-header" style={{ padding: '12px 16px' }}>
+          <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>
+            Authorization Routing Console
           </span>
-          <button className="btn btn-sm btn-danger" onClick={handleClose}>✕ Cancel</button>
+          <button className="btn btn-sm btn-danger" onClick={handleClose}>Cancel Review</button>
         </div>
 
         <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Channel / Action type */}
-          <div>
+          <div className="metadata-row">
+            <span>Protocol Status: Pending Signature</span>
+            <span>Operator: N-1421</span>
+            <span>Channel Scope: Administrative</span>
+          </div>
+
+          <div className="paper-card" style={{ padding: 14 }}>
             <label style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 6 }}>
               Action Type
             </label>
@@ -93,8 +97,7 @@ export default function CommunicationsDrawer() {
             </div>
           </div>
 
-          {/* Target */}
-          <div>
+          <div className="control-plate">
             <label style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 6 }}>
               Target District
             </label>
@@ -114,8 +117,7 @@ export default function CommunicationsDrawer() {
             </select>
           </div>
 
-          {/* Urgency */}
-          <div>
+          <div className="control-plate">
             <label style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 6 }}>
               Urgency
             </label>
@@ -133,8 +135,7 @@ export default function CommunicationsDrawer() {
             </div>
           </div>
 
-          {/* Message */}
-          <div>
+          <div className="control-plate">
             <label style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 6 }}>
               Message (optional)
             </label>
@@ -147,9 +148,8 @@ export default function CommunicationsDrawer() {
             />
           </div>
 
-          {/* Impact preview */}
           {preview && draft.actionType && (
-            <div style={{ background: 'var(--bg-elevated)', borderRadius: 6, padding: 12, border: '1px solid var(--border-bright)' }}>
+            <div className="paper-card" style={{ padding: 12 }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
                 Predicted Impact
               </div>
@@ -176,14 +176,13 @@ export default function CommunicationsDrawer() {
             </div>
           )}
 
-          {/* Send button */}
           <button
             className="btn btn-primary"
             disabled={!draft.actionType}
             onClick={sendCommunication}
             style={{ padding: '12px', fontSize: 14, justifyContent: 'center', textTransform: 'uppercase', letterSpacing: 2 }}
           >
-            Transmit
+            Approve Transmission
           </button>
         </div>
       </div>

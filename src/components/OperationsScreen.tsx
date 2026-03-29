@@ -19,7 +19,11 @@ const SPEED_MULTIPLIERS = {
 export default function OperationsScreen() {
   const advanceTick = useCityWatchStore((s) => s.advanceTick);
   const timeSpeed = useCityWatchStore((s) => s.ui.timeSpeed);
-  const lastTickRef = useRef(Date.now());
+  const lastTickRef = useRef(0);
+
+  useEffect(() => {
+    lastTickRef.current = Date.now();
+  }, []);
 
   // Game loop
   useEffect(() => {
@@ -37,24 +41,23 @@ export default function OperationsScreen() {
     return () => clearInterval(id);
   }, [timeSpeed, advanceTick]);
 
-  return (
+    return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      background: 'var(--bg-base)',
+      background: 'transparent',
       position: 'relative',
+      padding: 10,
+      gap: 10,
     }}>
-      {/* Top bar */}
       <TopStatusBar />
 
-      {/* Main layout: feed | map | context */}
       <div style={{
         flex: 1,
         display: 'grid',
-        gridTemplateColumns: '260px 1fr 260px',
-        gap: 6,
-        padding: 6,
+        gridTemplateColumns: '320px minmax(0, 1fr) 380px',
+        gap: 10,
         minHeight: 0,
         overflow: 'hidden',
       }}>
@@ -63,10 +66,8 @@ export default function OperationsScreen() {
         <ContextPanel />
       </div>
 
-      {/* Bottom action bar */}
       <QuickActionBar />
 
-      {/* Overlays */}
       <CommunicationsDrawer />
       <ToastNotificationStack />
     </div>

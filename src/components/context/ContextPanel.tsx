@@ -1,249 +1,273 @@
 import { useCityWatchStore } from '../../store/gameStore';
-import { getSelectedDistrict, getSelectedIncident, getSuggestedActions } from '../../store/selectors';
-import type { ContextTab, District, Incident } from '../../types';
-import { INCIDENT_TYPE_LABELS, COMM_TYPE_LABELS } from '../../data/cityData';
+import {
+  getCommunicationImpactPreview,
+  getSelectedDistrict,
+  getSelectedIncident,
+  getSuggestedActions,
+} from '../../store/selectors';
+import { COMM_TYPE_LABELS, INCIDENT_TYPE_LABELS } from '../../data/cityData';
+import type { CommunicationActionType } from '../../types';
 
-const CONTEXT_TABS: { key: ContextTab; label: string }[] = [
-  { key: 'district', label: 'District' },
-  { key: 'incident', label: 'Incident' },
-  { key: 'actions', label: 'Actions' },
-  { key: 'effects', label: 'Effects' },
+const FALLBACK_ACTIONS: CommunicationActionType[] = [
+  'district_alert',
+  'targeted_text',
+  'responder_tip',
+  'transit_notice',
+  'building_alarm',
+  'public_bulletin',
 ];
 
-function StatRow({ label, value, max = 100, color }: { label: string; value: number; max?: number; color?: string }) {
-  const pct = Math.max(0, Math.min(100, (value / max) * 100));
-  const barColor = color ?? '#4080c0';
-  return (
-    <div style={{ marginBottom: 8 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 3 }}>
-        <span style={{ color: 'var(--text-muted)' }}>{label}</span>
-        <span style={{ color: 'var(--text-secondary)' }}>{Math.round(value)}</span>
-      </div>
-      <div className="meter">
-        <div className="meter-bar" style={{ width: `${pct}%`, background: barColor }} />
-      </div>
-    </div>
-  );
-}
-
-function DistrictView({ district }: { district: District }) {
-  const suspicion = useCityWatchStore((s) => s.game.intelligence.districtSuspicionById[district.id] ?? 0);
-  const incidentsById = useCityWatchStore((s) => s.game.incidents.incidentsById);
-  const activeIncidents = useCityWatchStore((s) =>
-    s.game.incidents.activeIds.filter((id) => s.game.incidents.incidentsById[id]?.districtId === district.id)
-  );
-
-  return (
-    <div style={{ padding: 12, overflowY: 'auto' }}>
-      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4, color: 'var(--text-primary)' }}>{district.name}</div>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>
-        Pop. Density: {district.populationDensity} · Adjacent: {district.adjacencyIds.join(', ')}
-      </div>
-
-      <StatRow label="Trust" value={district.trust} color="linear-gradient(to right,#1a6a3a,#40c880)" />
-      <StatRow label="Panic" value={district.panic} color="linear-gradient(to right,#804000,#ff4040)" />
-      <StatRow label="Infrastructure" value={district.infrastructureStability} color="#4080c0" />
-      <StatRow label="Police Presence" value={district.policePresence} color="#6060a0" />
-      <StatRow label="Medical Load" value={district.medicalLoad} color="#a06020" />
-      <StatRow label="Camera Coverage" value={district.cameraCoverage} color="#2070a0" />
-      <StatRow label="Threat Suspicion" value={suspicion} color="#a03040" />
-
-      <div style={{ marginTop: 12, fontSize: 12 }}>
-        <div style={{ color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', fontSize: 10, letterSpacing: 1 }}>Active Incidents</div>
-        {activeIncidents.length === 0 ? (
-          <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>None</div>
-        ) : (
-          activeIncidents.map((id) => {
-            const inc = incidentsById[id];
-            return inc ? (
-              <div key={id} style={{ fontSize: 11, color: 'var(--text-warning)', marginBottom: 2 }}>
-                • {INCIDENT_TYPE_LABELS[inc.type]} (Sev {inc.severity})
-              </div>
-            ) : null;
-          })
-        )}
-      </div>
-    </div>
-  );
-}
-
-function IncidentView({ incident }: { incident: Incident }) {
-  const district = useCityWatchStore((s) => s.game.city.districtsById[incident.districtId]);
-  const resolveIncident = useCityWatchStore((s) => s.resolveIncident);
-
-  const confColor = incident.confidence >= 70 ? 'var(--text-ok)' : incident.confidence >= 40 ? 'var(--text-warning)' : 'var(--text-critical)';
-  const sevColor = ['', '#40c880', '#8abf40', '#ffb040', '#ff7020', '#ff4040'][incident.severity] ?? '#7a9ab8';
-
-  return (
-    <div style={{ padding: 12, overflowY: 'auto' }}>
-      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
-        {INCIDENT_TYPE_LABELS[incident.type]}
-      </div>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>
-        {district?.name ?? incident.districtId} · {new Date(incident.timestamp * 1000).toISOString().slice(11, 19)} elapsed
-      </div>
-
-      <div style={{ background: 'var(--bg-elevated)', borderRadius: 4, padding: 10, marginBottom: 12, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-        {incident.description}
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
-        <div style={{ textAlign: 'center', background: 'var(--bg-elevated)', borderRadius: 4, padding: 8 }}>
-          <div style={{ fontSize: 20, fontFamily: 'var(--font-mono)', color: sevColor }}>{incident.severity}</div>
-          <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Severity</div>
-        </div>
-        <div style={{ textAlign: 'center', background: 'var(--bg-elevated)', borderRadius: 4, padding: 8 }}>
-          <div style={{ fontSize: 20, fontFamily: 'var(--font-mono)', color: confColor }}>{Math.round(incident.confidence)}%</div>
-          <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Confidence</div>
-        </div>
-      </div>
-
-      <div style={{ fontSize: 11, marginBottom: 4 }}>
-        <span style={{ color: 'var(--text-muted)' }}>Suspected cause: </span>
-        <span style={{ color: 'var(--text-secondary)' }}>{incident.suspectedCause}</span>
-      </div>
-      {incident.casualtiesEstimate > 0 && (
-        <div style={{ fontSize: 11, marginBottom: 4 }}>
-          <span style={{ color: 'var(--text-muted)' }}>Est. casualties: </span>
-          <span style={{ color: 'var(--text-critical)' }}>{incident.casualtiesEstimate}</span>
-        </div>
-      )}
-      <div style={{ fontSize: 11, marginBottom: 12 }}>
-        <span style={{ color: 'var(--text-muted)' }}>Responder assigned: </span>
-        <span style={{ color: incident.responderAssigned ? 'var(--text-ok)' : 'var(--text-warning)' }}>
-          {incident.responderAssigned ? 'Yes' : 'No'}
-        </span>
-      </div>
-
-      {incident.status === 'active' && (
-        <button className="btn btn-sm btn-primary" onClick={() => resolveIncident(incident.id)}>
-          Mark Resolved
-        </button>
-      )}
-    </div>
-  );
-}
-
-function ActionsView() {
-  const game = useCityWatchStore((s) => s.game);
-  const ui = useCityWatchStore((s) => s.ui);
-  const setUI = useCityWatchStore((s) => s.setUI);
-  const setDraft = useCityWatchStore((s) => s.setDraft);
-  const suggestions = getSuggestedActions(game, ui);
-
-  return (
-    <div style={{ padding: 12, overflowY: 'auto' }}>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Suggested Actions</div>
-      {suggestions.length === 0 ? (
-        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Select a district or incident to see suggestions.</div>
-      ) : (
-        suggestions.map((s, i) => (
-          <div key={i} style={{ background: 'var(--bg-elevated)', borderRadius: 4, padding: 10, marginBottom: 8, border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
-              {COMM_TYPE_LABELS[s.actionType]}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 8, lineHeight: 1.4 }}>
-              {s.rationale}
-            </div>
-            <button
-              className="btn btn-sm btn-primary"
-              onClick={() => {
-                setDraft({ actionType: s.actionType, targetDistrictId: s.targetDistrictId, urgency: s.urgency });
-                setUI({ isCommunicationsDrawerOpen: true });
-              }}
-            >
-              Use This Action
-            </button>
-          </div>
-        ))
-      )}
-    </div>
-  );
-}
-
-function EffectsView() {
-  const game = useCityWatchStore((s) => s.game);
-  const sentCount = game.communications.sentActionIds.length;
-  const recent = game.communications.sentActionIds.slice(-5).reverse();
-
-  return (
-    <div style={{ padding: 12, overflowY: 'auto' }}>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-        Active Effects · {sentCount} actions sent
-      </div>
-      {recent.length === 0 ? (
-        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No communications sent yet.</div>
-      ) : (
-        recent.map((id) => {
-          const action = game.communications.actionsById[id];
-          if (!action) return null;
-          return (
-            <div key={id} style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6, padding: '6px 8px', background: 'var(--bg-elevated)', borderRadius: 4 }}>
-              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{COMM_TYPE_LABELS[action.actionType]}</span>
-              {' → '}{action.targetDistrictId ?? 'All'}
-              <span style={{ color: action.projectedTrustImpact >= 0 ? 'var(--text-ok)' : 'var(--text-critical)', marginLeft: 8 }}>
-                T{action.projectedTrustImpact >= 0 ? '+' : ''}{action.projectedTrustImpact}
-              </span>
-              <span style={{ color: action.projectedPanicImpact > 0 ? 'var(--text-warning)' : 'var(--text-ok)', marginLeft: 6 }}>
-                P{action.projectedPanicImpact >= 0 ? '+' : ''}{action.projectedPanicImpact}
-              </span>
-            </div>
-          );
-        })
-      )}
-    </div>
-  );
+function getFeedStatus(online: boolean, corrupted: boolean) {
+  if (!online) return { label: 'Null', note: 'Signal route invalid', className: 'badge-muted' };
+  if (corrupted) return { label: 'Corrupted', note: 'Feed integrity compromised', className: 'badge-critical' };
+  return { label: 'Live', note: 'Archive substitution unconfirmed', className: 'badge-ok' };
 }
 
 export default function ContextPanel() {
   const game = useCityWatchStore((s) => s.game);
   const ui = useCityWatchStore((s) => s.ui);
+  const draft = useCityWatchStore((s) => s.draft);
+  const setDraft = useCityWatchStore((s) => s.setDraft);
   const setUI = useCityWatchStore((s) => s.setUI);
+  const resolveIncident = useCityWatchStore((s) => s.resolveIncident);
 
-  const selectedDistrict = getSelectedDistrict(game, ui);
+  const selectedDistrict = getSelectedDistrict(game, ui) ?? (ui.selectedIncidentId ? game.city.districtsById[game.incidents.incidentsById[ui.selectedIncidentId]?.districtId] : null);
   const selectedIncident = getSelectedIncident(game, ui);
+  const suggestions = getSuggestedActions(game, ui);
+  const cameras = Object.values(game.intelligence.cameraStatesById).filter((camera) =>
+    selectedDistrict ? camera.districtId === selectedDistrict.id : true
+  );
+  const activeCamera = cameras[0] ?? Object.values(game.intelligence.cameraStatesById)[0];
+  const feedStatus = activeCamera ? getFeedStatus(activeCamera.online, activeCamera.feedCorrupted) : getFeedStatus(false, false);
+  const attachments = [
+    selectedIncident ? `FEEDGRAB_${selectedIncident.id.slice(-4).toUpperCase()}` : null,
+    activeCamera ? `${activeCamera.id.toUpperCase()}_ROUTE` : null,
+    selectedDistrict ? `${selectedDistrict.id.toUpperCase()}_FIELD_NOTES` : null,
+  ].filter(Boolean) as string[];
+
+  const forecastDraft =
+    draft.actionType || selectedDistrict
+      ? {
+          ...draft,
+          actionType: draft.actionType ?? suggestions[0]?.actionType ?? FALLBACK_ACTIONS[0],
+          targetDistrictId: draft.targetDistrictId ?? selectedDistrict?.id ?? null,
+        }
+      : null;
+  const forecast = forecastDraft ? getCommunicationImpactPreview(game, forecastDraft) : null;
+
+  const availableActions = suggestions.length > 0 ? suggestions : FALLBACK_ACTIONS.map((actionType) => ({
+    actionType,
+    targetDistrictId: selectedDistrict?.id ?? null,
+    urgency: 'medium' as const,
+    rationale: 'Manual protocol available for sector review.',
+  }));
 
   return (
-    <div className="panel" style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0 }}>
-      <div className="panel-header">
-        <span>Context</span>
-        {selectedDistrict && <span style={{ color: 'var(--text-secondary)' }}>{selectedDistrict.name}</span>}
-      </div>
-
-      <div style={{ padding: '6px 8px', borderBottom: '1px solid var(--border)' }}>
-        <div className="tabs">
-          {CONTEXT_TABS.map((t) => (
-            <button
-              key={t.key}
-              className={`tab ${ui.activeContextTab === t.key ? 'active' : ''}`}
-              onClick={() => setUI({ activeContextTab: t.key })}
-            >
-              {t.label}
-            </button>
-          ))}
+    <div className="panel" style={{ display: 'grid', gridTemplateRows: '1.2fr 1fr', height: '100%', minWidth: 0, overflow: 'hidden' }}>
+      <section style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div className="panel-header">
+          <span>Live Visual Attachments</span>
+          <span className={`badge ${feedStatus.className}`}>{feedStatus.label}</span>
         </div>
-      </div>
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {ui.activeContextTab === 'district' && selectedDistrict && (
-          <DistrictView district={selectedDistrict} />
-        )}
-        {ui.activeContextTab === 'district' && !selectedDistrict && (
-          <div style={{ padding: 20, color: 'var(--text-muted)', fontSize: 12 }}>
-            Select a district on the map to inspect it.
+        <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10, minHeight: 0 }}>
+          <div className="metadata-row">
+            <span>Camera Route: {activeCamera?.id.toUpperCase() ?? 'NO SOURCE'}</span>
+            <span>Sector: {selectedDistrict?.name ?? 'Awaiting sector review'}</span>
+            <span>Review Status: {selectedIncident ? 'Incident linked' : 'Idle'}</span>
           </div>
-        )}
-        {ui.activeContextTab === 'incident' && selectedIncident && (
-          <IncidentView incident={selectedIncident} />
-        )}
-        {ui.activeContextTab === 'incident' && !selectedIncident && (
-          <div style={{ padding: 20, color: 'var(--text-muted)', fontSize: 12 }}>
-            Select an incident from the feed to investigate.
+
+          <div className="monitor-well" style={{ flex: 1, minHeight: 208, padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 10, color: '#cabf9f', letterSpacing: '0.08em' }}>
+              <span>VISUAL ATTACHMENT 03</span>
+              <span>{feedStatus.note.toUpperCase()}</span>
+            </div>
+
+            <div style={{
+              flex: 1,
+              margin: '10px 0',
+              border: '1px solid rgba(202,191,159,0.22)',
+              position: 'relative',
+              background:
+                'radial-gradient(circle at center, rgba(196,184,158,0.1), transparent 52%), linear-gradient(180deg, rgba(255,255,255,0.03), transparent 38%), #14110d',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                background:
+                  'linear-gradient(180deg, rgba(255,255,255,0.06), transparent 22%), repeating-linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.03) 1px, transparent 1px, transparent 4px)',
+                opacity: 0.9,
+              }} />
+
+              <div style={{
+                position: 'absolute',
+                inset: '14% 16%',
+                border: '1px solid rgba(202,191,159,0.28)',
+                display: 'grid',
+                gridTemplateRows: '1fr auto',
+                alignItems: 'center',
+                justifyItems: 'center',
+                color: '#e7dec7',
+                textAlign: 'center',
+                padding: 16,
+              }}>
+                <div>
+                  <div style={{ fontSize: 13, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 10 }}>
+                    {selectedDistrict ? `${selectedDistrict.name} Corridor Feed` : 'Routed Surveillance Waiting'}
+                  </div>
+                  <div style={{ fontSize: 42, lineHeight: 1 }}>{feedStatus.label === 'Null' ? '∅' : feedStatus.label === 'Corrupted' ? '▓' : '◫'}</div>
+                  <div style={{ marginTop: 12, fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                    {selectedIncident ? (INCIDENT_TYPE_LABELS[selectedIncident.type] ?? selectedIncident.type).toUpperCase() : 'NO INCIDENT FRAME SELECTED'}
+                  </div>
+                </div>
+
+                <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontFamily: 'var(--font-mono)', fontSize: 10, color: '#d0c2a6' }}>
+                  <span>TS {String(Math.floor(game.run.elapsedSeconds / 60)).padStart(2, '0')}:{String(Math.floor(game.run.elapsedSeconds % 60)).padStart(2, '0')}</span>
+                  <span style={{ textAlign: 'right' }}>Q {activeCamera?.feedCorrupted ? 'LOW' : 'STABLE'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="metadata-row" style={{ justifyContent: 'space-between' }}>
+              <span>Timestamp: {String(Math.floor(game.run.elapsedSeconds / 60)).padStart(2, '0')}:{String(Math.floor(game.run.elapsedSeconds % 60)).padStart(2, '0')}</span>
+              <span>Archive Tag: {selectedDistrict?.id.toUpperCase() ?? 'UNSET'}-03</span>
+              <span>Feed Quality: {feedStatus.label}</span>
+            </div>
           </div>
-        )}
-        {ui.activeContextTab === 'actions' && <ActionsView />}
-        {ui.activeContextTab === 'effects' && <EffectsView />}
-      </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="control-plate">
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 8 }}>
+                Source Selector
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {cameras.length === 0 ? (
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>No routed cameras for this sector.</div>
+                ) : (
+                  cameras.map((camera) => {
+                    const status = getFeedStatus(camera.online, camera.feedCorrupted);
+                    return (
+                      <div key={camera.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 11, color: 'var(--text-primary)' }}>
+                        <span>{camera.id.toUpperCase()}</span>
+                        <span className={`badge ${status.className}`}>{status.label}</span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className="control-plate">
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 8 }}>
+                Attachment Tray
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-secondary)' }}>
+                {attachments.length === 0 ? (
+                  <span>No linked evidence references.</span>
+                ) : (
+                  attachments.map((attachment) => <span key={attachment}>{attachment}</span>)
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ display: 'flex', flexDirection: 'column', borderTop: '2px solid var(--border)', minHeight: 0 }}>
+        <div className="panel-header">
+          <span>Authorization Panel</span>
+          <span style={{ color: 'var(--text-secondary)' }}>{selectedDistrict?.name ?? 'No target sector'}</span>
+        </div>
+
+        <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10, minHeight: 0, overflowY: 'auto' }}>
+          <div className="paper-card" style={{ padding: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.16em', color: '#5e503b' }}>
+                  Action Review Form
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 700, marginTop: 3 }}>
+                  {selectedDistrict?.name ?? 'Awaiting sector assignment'}
+                </div>
+              </div>
+              <span className="stamp" style={{ color: selectedIncident?.severity && selectedIncident.severity >= 4 ? 'var(--text-critical)' : '#5d513c' }}>
+                {selectedIncident ? 'Under Review' : 'Pending'}
+              </span>
+            </div>
+
+            <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 11 }}>
+              <div>
+                <div style={{ color: '#6b5d47', textTransform: 'uppercase', fontSize: 9, letterSpacing: '0.12em' }}>Target Sector</div>
+                <div>{selectedDistrict?.id.toUpperCase() ?? 'UNASSIGNED'}</div>
+              </div>
+              <div>
+                <div style={{ color: '#6b5d47', textTransform: 'uppercase', fontSize: 9, letterSpacing: '0.12em' }}>Linked Incident</div>
+                <div>{selectedIncident ? INCIDENT_TYPE_LABELS[selectedIncident.type] : 'None linked'}</div>
+              </div>
+              <div>
+                <div style={{ color: '#6b5d47', textTransform: 'uppercase', fontSize: 9, letterSpacing: '0.12em' }}>Exposure Risk</div>
+                <div>{Math.round(game.entity.exposureRisk)}%</div>
+              </div>
+              <div>
+                <div style={{ color: '#6b5d47', textTransform: 'uppercase', fontSize: 9, letterSpacing: '0.12em' }}>Projected Compliance</div>
+                <div>{forecast ? `~${forecast.projectedCompliance}%` : 'Awaiting protocol'}</div>
+              </div>
+            </div>
+
+            {forecast && (
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed rgba(42,36,25,0.35)', fontSize: 11, lineHeight: 1.5 }}>
+                <div style={{ color: '#6b5d47', textTransform: 'uppercase', fontSize: 9, letterSpacing: '0.12em', marginBottom: 4 }}>
+                  Forecast
+                </div>
+                <div>{forecast.description}</div>
+                <div style={{ display: 'flex', gap: 10, marginTop: 6, fontFamily: 'var(--font-mono)' }}>
+                  <span>TR {forecast.projectedTrustImpact >= 0 ? '+' : ''}{forecast.projectedTrustImpact}</span>
+                  <span>PN {forecast.projectedPanicImpact >= 0 ? '+' : ''}{forecast.projectedPanicImpact}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="control-plate">
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 8 }}>
+              Protocol Actions
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {availableActions.slice(0, 4).map((action) => (
+                <button
+                  key={`${action.actionType}-${action.targetDistrictId ?? 'city'}`}
+                  className={`btn ${draft.actionType === action.actionType ? 'btn-primary' : ''}`}
+                  onClick={() => {
+                    setDraft({
+                      actionType: action.actionType,
+                      targetDistrictId: action.targetDistrictId,
+                      urgency: action.urgency,
+                    });
+                    setUI({ isCommunicationsDrawerOpen: true });
+                  }}
+                >
+                  {COMM_TYPE_LABELS[action.actionType]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: selectedIncident?.status === 'active' ? '1fr 1fr' : '1fr', gap: 8 }}>
+            {selectedIncident?.status === 'active' && (
+              <button className="btn" onClick={() => resolveIncident(selectedIncident.id)}>
+                Process Incident
+              </button>
+            )}
+            <button
+              className="btn btn-primary"
+              onClick={() => setUI({ isCommunicationsDrawerOpen: true })}
+            >
+              Open Command Drawer
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

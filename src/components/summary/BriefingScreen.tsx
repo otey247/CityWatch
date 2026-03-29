@@ -21,21 +21,19 @@ export default function BriefingScreen() {
       padding: 24,
     }}>
       <div style={{ maxWidth: 640, width: '100%' }}>
-        {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 32, fontWeight: 700, color: '#a0c0e0', letterSpacing: 8, marginBottom: 4 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 30, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: 6, marginBottom: 4, textTransform: 'uppercase' }}>
             CITYWATCH
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: 4, textTransform: 'uppercase' }}>
-            Observer Mode · Classified Briefing
+            Municipal Surveillance Bureau · Shift Briefing
           </div>
         </div>
 
-        {/* Briefing card */}
         <div className="panel" style={{ marginBottom: 20 }}>
           <div className="panel-header">
-            <span>Situation Report</span>
-            <span style={{ color: 'var(--text-critical)', fontSize: 10 }}>CLASSIFIED</span>
+            <span>Bureau Header Plate</span>
+            <span style={{ color: 'var(--text-critical)', fontSize: 10 }}>Clearance Black</span>
           </div>
           <div style={{ padding: 16, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
             <p style={{ marginBottom: 12 }}>
@@ -60,10 +58,9 @@ export default function BriefingScreen() {
           </div>
         </div>
 
-        {/* City overview */}
         <div className="panel" style={{ marginBottom: 24 }}>
           <div className="panel-header">
-            <span>City Sectors</span>
+            <span>Sector Planning Board</span>
             <span style={{ color: 'var(--text-muted)' }}>{DISTRICTS.length} districts</span>
           </div>
           <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
@@ -76,7 +73,6 @@ export default function BriefingScreen() {
           </div>
         </div>
 
-        {/* Rules */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
           {[
             { label: 'Victory', text: 'Expose and neutralize the threat before the city collapses.', color: 'var(--text-ok)' },
@@ -91,13 +87,12 @@ export default function BriefingScreen() {
           ))}
         </div>
 
-        {/* Start button */}
         <button
           className="btn btn-primary"
           onClick={handleStart}
           style={{ width: '100%', padding: 16, fontSize: 15, justifyContent: 'center', textTransform: 'uppercase', letterSpacing: 4 }}
         >
-          ▶ Begin Observation
+          Begin Terminal Shift
         </button>
       </div>
     </div>

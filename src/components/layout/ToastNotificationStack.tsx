@@ -29,6 +29,9 @@ export default function ToastNotificationStack() {
   const seenCountRef = useRef(0);
   // Track all scheduled timeout IDs so we can clear them on unmount
   const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const clearScheduledTimeouts = () => {
+    for (const id of timeoutIdsRef.current) clearTimeout(id);
+  };
 
   useEffect(() => {
     if (keyEvents.length <= seenCountRef.current) return;
@@ -52,10 +55,7 @@ export default function ToastNotificationStack() {
 
   // Clear all pending timeouts when the component unmounts
   useEffect(() => {
-    const timeoutIds = timeoutIdsRef.current;
-    return () => {
-      for (const id of timeoutIds) clearTimeout(id);
-    };
+    return clearScheduledTimeouts;
   }, []);
 
   if (toasts.length === 0) return null;

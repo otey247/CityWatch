@@ -31,6 +31,10 @@ export default function ToastNotificationStack() {
   const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const clearScheduledTimeouts = () => {
     for (const id of timeoutIdsRef.current) clearTimeout(id);
+    timeoutIdsRef.current = [];
+  };
+  const releaseTimeoutId = (timeoutId: ReturnType<typeof setTimeout>) => {
+    timeoutIdsRef.current = timeoutIdsRef.current.filter((id) => id !== timeoutId);
   };
 
   useEffect(() => {
@@ -43,10 +47,14 @@ export default function ToastNotificationStack() {
       setToasts((prev) => [{ id, event, visible: true }, ...prev].slice(0, 5));
 
       const fadeId = setTimeout(() => {
+        releaseTimeoutId(fadeId);
         setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, visible: false } : t)));
+
         const removeId = setTimeout(() => {
+          releaseTimeoutId(removeId);
           setToasts((prev) => prev.filter((t) => t.id !== id));
         }, 500);
+
         timeoutIdsRef.current.push(removeId);
       }, 4000);
       timeoutIdsRef.current.push(fadeId);
@@ -55,7 +63,7 @@ export default function ToastNotificationStack() {
 
   // Clear all pending timeouts when the component unmounts
   useEffect(() => {
-    return clearScheduledTimeouts;
+    return () => clearScheduledTimeouts();
   }, []);
 
   if (toasts.length === 0) return null;

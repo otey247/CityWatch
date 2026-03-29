@@ -221,7 +221,10 @@ export default function CityMapPanel() {
         </div>
         <div className="control-plate">
           <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4 }}>Stamped Alerts</div>
-          <div style={{ fontSize: 12, color: 'var(--text-primary)' }}>{game.incidents.activeIds.length} active markers</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 12, color: 'var(--text-primary)' }}>{game.incidents.activeIds.length} active markers</span>
+            {game.incidents.activeIds.length > 0 && <span className="alert-plate">Review</span>}
+          </div>
         </div>
         <div className="control-plate">
           <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4 }}>Routing Note</div>

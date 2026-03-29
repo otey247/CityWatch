@@ -38,6 +38,7 @@ function SectorDossierCard({ incident, selected, onClick }: { incident: Incident
       <div
         className="paper-card"
         style={{
+          position: 'relative',
           padding: 12,
           display: 'flex',
           flexDirection: 'column',
@@ -48,6 +49,7 @@ function SectorDossierCard({ incident, selected, onClick }: { incident: Incident
           minHeight: 172,
         }}
       >
+        <span className="paper-clip" />
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
           <div>
             <div style={{ fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#574a35' }}>

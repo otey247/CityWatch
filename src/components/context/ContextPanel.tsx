@@ -31,8 +31,11 @@ export default function ContextPanel() {
   const setUI = useCityWatchStore((s) => s.setUI);
   const resolveIncident = useCityWatchStore((s) => s.resolveIncident);
 
-  const selectedDistrict = getSelectedDistrict(game, ui) ?? (ui.selectedIncidentId ? game.city.districtsById[game.incidents.incidentsById[ui.selectedIncidentId]?.districtId] : null);
   const selectedIncident = getSelectedIncident(game, ui);
+  const incidentDistrictId = selectedIncident?.districtId ?? null;
+  const selectedDistrict =
+    getSelectedDistrict(game, ui) ??
+    (incidentDistrictId ? game.city.districtsById[incidentDistrictId] ?? null : null);
   const suggestions = getSuggestedActions(game, ui);
   const cameras = Object.values(game.intelligence.cameraStatesById).filter((camera) =>
     selectedDistrict ? camera.districtId === selectedDistrict.id : true
@@ -78,9 +81,11 @@ export default function ContextPanel() {
           </div>
 
           <div className="monitor-well" style={{ flex: 1, minHeight: 208, padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 10, color: '#cabf9f', letterSpacing: '0.08em' }}>
-              <span>VISUAL ATTACHMENT 03</span>
-              <span>{feedStatus.note.toUpperCase()}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+              <span className="monitor-label">Visual Attachment 03</span>
+              <span className={feedStatus.label === 'Corrupted' || feedStatus.label === 'Null' ? 'alert-plate' : 'monitor-label'}>
+                {feedStatus.note.toUpperCase()}
+              </span>
             </div>
 
             <div style={{

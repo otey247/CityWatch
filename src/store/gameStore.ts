@@ -13,6 +13,7 @@ import { tickCityState } from '../systems/cityState';
 import { trySpawnIncident, escalateIncident } from '../systems/incidentEngine';
 import { tickEntity } from '../systems/entitySystem';
 import { buildActionRecord, computeCommEffect } from '../systems/communicationSystem';
+import { seedRng } from '../systems/rng';
 
 // ─── Initial States ───────────────────────────────────────────────────────────
 
@@ -169,8 +170,10 @@ export const useCityWatchStore = create<CityWatchStore>((set, get) => ({
   addKeyEvent: (event) => set((s) => ({ keyEvents: [...s.keyEvents, event] })),
 
   startRun: () => {
+    const initialGame = makeInitialGameState();
+    seedRng(initialGame.run.seed);
     set({
-      game: makeInitialGameState(),
+      game: initialGame,
       ui: { ...INITIAL_UI_STATE },
       draft: { ...INITIAL_DRAFT },
       keyEvents: [],
@@ -227,12 +230,12 @@ export const useCityWatchStore = create<CityWatchStore>((set, get) => ({
       const outcomeHints = { ...s.game.summary.districtOutcomeHints };
       if (incident.severity >= 4) outcomeHints[incident.districtId] = 'contested';
 
-      get().addKeyEvent({
+      const newKeyEvent: KeyRunEvent = {
         timestamp: s.game.run.elapsedSeconds,
         description: `Incident resolved in ${district?.name ?? incident.districtId}: ${incident.type.replace(/_/g, ' ')}`,
         type: 'incident',
         districtId: incident.districtId,
-      });
+      };
 
       return {
         game: {
@@ -253,11 +256,12 @@ export const useCityWatchStore = create<CityWatchStore>((set, get) => ({
             districtOutcomeHints: outcomeHints,
           },
         },
+        keyEvents: [...s.keyEvents, newKeyEvent],
       };
     }),
 
   sendCommunication: () => {
-    const { draft, game, addKeyEvent } = get();
+    const { draft, game } = get();
     if (!draft.actionType) return;
 
     const record = buildActionRecord(draft, game, game.run.elapsedSeconds);
@@ -309,17 +313,22 @@ export const useCityWatchStore = create<CityWatchStore>((set, get) => ({
         definingActionIds: [...s.game.summary.definingActionIds, record.id],
       };
 
-      addKeyEvent({
+      const newKeyEvent: KeyRunEvent = {
         timestamp: s.game.run.elapsedSeconds,
         description: `Sent ${record.actionType.replace(/_/g, ' ')} to ${record.targetDistrictId ?? 'all districts'}`,
         type: 'action',
         districtId: record.targetDistrictId,
-      });
+      };
 
       return {
         game: {
           ...s.game,
-          city: { ...updatedCity, ...stats },
+          city: {
+            ...updatedCity,
+            citywideTrust: stats.citywideTrust,
+            citywidePanic: stats.citywidePanic,
+            citywideIntegrity: stats.citywideIntegrity,
+          },
           communications: newComms,
           summary: newSummary,
         },
@@ -328,6 +337,7 @@ export const useCityWatchStore = create<CityWatchStore>((set, get) => ({
           isCommunicationsDrawerOpen: false,
         },
         draft: { ...INITIAL_DRAFT },
+        keyEvents: [...s.keyEvents, newKeyEvent],
       };
     });
   },
@@ -338,6 +348,7 @@ export const useCityWatchStore = create<CityWatchStore>((set, get) => ({
 
     set((s) => {
       let game = { ...s.game };
+      const pendingEvents: KeyRunEvent[] = [];
 
       // 1. Advance time
       const newElapsed = game.run.elapsedSeconds + deltaSeconds;
@@ -357,8 +368,8 @@ export const useCityWatchStore = create<CityWatchStore>((set, get) => ({
       const prevEntityPhase = game.entity.phase;
       game = { ...game, entity: { ...game.entity, ...entityUpdate } };
 
-      // 4. Spawn incidents
-      const newIncident = trySpawnIncident(game, newElapsed);
+      // 4. Spawn incidents (spawn rate is per-second; deltaSeconds is passed for correct probability)
+      const newIncident = trySpawnIncident(game, newElapsed, deltaSeconds);
       if (newIncident) {
         const districtId = newIncident.districtId;
         const district = game.city.districtsById[districtId];
@@ -383,7 +394,13 @@ export const useCityWatchStore = create<CityWatchStore>((set, get) => ({
 
         game = {
           ...game,
-          city: { ...game.city, districtsById: updatedDistricts, ...stats },
+          city: {
+            ...game.city,
+            districtsById: updatedDistricts,
+            citywideTrust: stats.citywideTrust,
+            citywidePanic: stats.citywidePanic,
+            citywideIntegrity: stats.citywideIntegrity,
+          },
           incidents: {
             ...game.incidents,
             activeIds: [...game.incidents.activeIds, newIncident.id],
@@ -403,13 +420,13 @@ export const useCityWatchStore = create<CityWatchStore>((set, get) => ({
       }
       game = { ...game, incidents: { ...game.incidents, incidentsById: updatedIncidentsById } };
 
-      // 6. Entity phase change notification
+      // 6. Entity phase change notification (accumulated, not nested set)
       if (entityUpdate.phase && entityUpdate.phase !== prevEntityPhase) {
         const label =
           entityUpdate.phase === 'recognized'
             ? 'Threat pattern detected — entity recognized'
             : 'Entity in full crisis mode';
-        s.addKeyEvent({ timestamp: newElapsed, description: label, type: 'entity', districtId: null });
+        pendingEvents.push({ timestamp: newElapsed, description: label, type: 'entity', districtId: null });
       }
 
       // 7. Update suspicion map
@@ -441,7 +458,7 @@ export const useCityWatchStore = create<CityWatchStore>((set, get) => ({
         }
         game = { ...game, summary: { ...game.summary, districtOutcomeHints: hints } };
 
-        s.addKeyEvent({
+        pendingEvents.push({
           timestamp: newElapsed,
           description: endCondition.reason,
           type: 'system',
@@ -449,7 +466,10 @@ export const useCityWatchStore = create<CityWatchStore>((set, get) => ({
         });
       }
 
-      return { game };
+      return {
+        game,
+        keyEvents: pendingEvents.length > 0 ? [...s.keyEvents, ...pendingEvents] : s.keyEvents,
+      };
     });
 
     // Navigate to summary after a delay if run ended

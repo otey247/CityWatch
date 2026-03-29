@@ -1,4 +1,5 @@
 import type { Incident, IncidentType, GameState, EntityPhase } from '../types';
+import { seededRandom } from './rng';
 
 let incidentCounter = 0;
 export function nextIncidentId() {
@@ -152,12 +153,12 @@ function pickWeightedDistrict(
 ): string {
   if (bias && bias.length > 0) {
     const valid = bias.filter((id) => districtIds.includes(id));
-    if (valid.length > 0) return valid[Math.floor(Math.random() * valid.length)];
+    if (valid.length > 0) return valid[Math.floor(seededRandom() * valid.length)];
   }
   // Weight by suspicion
   const weights = districtIds.map((id) => 1 + (suspects[id] ?? 0) / 20);
   const total = weights.reduce((s, w) => s + w, 0);
-  let r = Math.random() * total;
+  let r = seededRandom() * total;
   for (let i = 0; i < districtIds.length; i++) {
     r -= weights[i];
     if (r <= 0) return districtIds[i];
@@ -165,23 +166,36 @@ function pickWeightedDistrict(
   return districtIds[districtIds.length - 1];
 }
 
+/**
+ * Attempt to spawn a new incident for this simulation tick.
+ *
+ * @param state   - Current game state
+ * @param elapsed - Total elapsed run seconds (used as the incident timestamp)
+ * @param deltaSeconds - Seconds advanced this tick; used to convert the per-second
+ *   spawn rate into a per-step probability so spawn frequency stays consistent
+ *   regardless of tick interval or time-speed multiplier.
+ */
 export function trySpawnIncident(
   state: GameState,
-  elapsed: number
+  elapsed: number,
+  deltaSeconds: number
 ): Incident | null {
   const { entity, city, incidents } = state;
   const activeCount = incidents.activeIds.length;
 
-  // Spawn rate scales with entity phase
-  const baseRate = entity.phase === 'hidden' ? 0.03 : entity.phase === 'recognized' ? 0.07 : 0.12;
+  // Per-second spawn rate scales with entity phase
+  const ratePerSecond = entity.phase === 'hidden' ? 0.03 : entity.phase === 'recognized' ? 0.07 : 0.12;
+
+  // Convert per-second rate to per-step probability so spawn frequency is independent of tick interval
+  const spawnChance = 1 - Math.exp(-ratePerSecond * deltaSeconds);
 
   // Don't flood the feed
   if (activeCount >= 12) return null;
 
-  if (Math.random() > baseRate) return null;
+  if (seededRandom() > spawnChance) return null;
 
   const scripts = INCIDENT_SCRIPTS[entity.phase];
-  const script = scripts[Math.floor(Math.random() * scripts.length)];
+  const script = scripts[Math.floor(seededRandom() * scripts.length)];
   const districtId = pickWeightedDistrict(
     city.districtIds,
     state.intelligence.districtSuspicionById,

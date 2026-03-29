@@ -19,7 +19,7 @@ export function getRunEndCondition(state: GameState): RunEndCondition | null {
     return { outcome: run.outcome, reason: 'Run already ended.' };
   }
 
-  // Victory: entity phase crisis AND citywidePanic < 60 AND citywideIntegrity > 40
+  // Victory: entity fully exposed (exposureRisk maxed) while in crisis phase
   if (entity.phase === 'crisis' && entity.exposureRisk >= 100) {
     return { outcome: 'victory', reason: 'Threat exposed and neutralized by responders.' };
   }
@@ -59,14 +59,14 @@ export function getRunEndCondition(state: GameState): RunEndCondition | null {
 
 export function computeCitywideStats(
   districtsById: Record<string, District>
-): { trust: number; panic: number; integrity: number } {
+): { citywideTrust: number; citywidePanic: number; citywideIntegrity: number } {
   const districts = Object.values(districtsById);
-  if (districts.length === 0) return { trust: 50, panic: 50, integrity: 50 };
+  if (districts.length === 0) return { citywideTrust: 50, citywidePanic: 50, citywideIntegrity: 50 };
   const avg = (key: keyof District) =>
     districts.reduce((s, d) => s + (d[key] as number), 0) / districts.length;
   return {
-    trust: avg('trust'),
-    panic: avg('panic'),
-    integrity: avg('infrastructureStability'),
+    citywideTrust: avg('trust'),
+    citywidePanic: avg('panic'),
+    citywideIntegrity: avg('infrastructureStability'),
   };
 }

@@ -6,9 +6,18 @@ export function tickEntity(entity: EntityState, state: GameState, deltaSeconds: 
   const avgTrust = city.citywideTrust;
   const activeIncidents = incidents.activeIds.length;
 
-  // Aggression rises with panic, trust falling, and low police presence
+  // Average police presence across districts
+  const districtValues = Object.values(city.districtsById);
+  const avgPolicePresence =
+    districtValues.length > 0
+      ? districtValues.reduce((s, d) => s + d.policePresence, 0) / districtValues.length
+      : 50;
+
+  // Aggression rises with panic and falling trust; reduced by strong police presence
   const aggressionPush = (avgPanic / 100) * 0.05 * deltaSeconds;
-  const aggressionDrag = (avgTrust / 100) * 0.02 * deltaSeconds;
+  const aggressionDrag =
+    (avgTrust / 100) * 0.02 * deltaSeconds +
+    (avgPolicePresence / 100) * 0.01 * deltaSeconds;
   const newAggression = Math.max(0, Math.min(100, entity.aggression + aggressionPush - aggressionDrag));
 
   // Exposure risk increases with each incident resolved (entity seen)

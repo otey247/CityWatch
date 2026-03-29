@@ -123,6 +123,11 @@ export function buildActionRecord(
     ? computeCommEffect(draft.actionType, draft.targetDistrictId, draft.urgency, state)
     : { panicDelta: 0, trustDelta: 0, infrastructureDelta: 0 };
 
+  const district = draft.targetDistrictId
+    ? state.city.districtsById[draft.targetDistrictId]
+    : null;
+  const trust = district?.trust ?? state.city.citywideTrust;
+
   return {
     id: nextCommId(),
     actionType: draft.actionType ?? 'district_alert',
@@ -130,7 +135,7 @@ export function buildActionRecord(
     targetDistrictId: draft.targetDistrictId,
     targetRecipientId: null,
     urgency: draft.urgency,
-    projectedCompliance: Math.round((state.city.citywideTrust / 100) * 80 + 20),
+    projectedCompliance: Math.round(trust * 0.8 + 20),
     projectedTrustImpact: effect.trustDelta,
     projectedPanicImpact: effect.panicDelta,
     delaySeconds: draft.urgency === 'high' ? 0 : draft.urgency === 'medium' ? 5 : 10,

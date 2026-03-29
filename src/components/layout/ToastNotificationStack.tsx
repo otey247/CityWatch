@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCityWatchStore } from '../../store/gameStore';
 import type { KeyRunEvent } from '../../types';
 
@@ -25,25 +25,37 @@ const TYPE_ICONS: Record<KeyRunEvent['type'], string> = {
 export default function ToastNotificationStack() {
   const keyEvents = useCityWatchStore((s) => s.keyEvents);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [seenCount, setSeenCount] = useState(0);
+  // Use a ref for seenCount to avoid StrictMode double-fire of the effect
+  const seenCountRef = useRef(0);
+  // Track all scheduled timeout IDs so we can clear them on unmount
+  const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
-    if (keyEvents.length <= seenCount) return;
-    const newEvents = keyEvents.slice(seenCount);
-    setSeenCount(keyEvents.length);
+    if (keyEvents.length <= seenCountRef.current) return;
+    const newEvents = keyEvents.slice(seenCountRef.current);
+    seenCountRef.current = keyEvents.length;
 
     for (const event of newEvents) {
       const id = `toast-${Date.now()}-${Math.random()}`;
       setToasts((prev) => [{ id, event, visible: true }, ...prev].slice(0, 5));
 
-      setTimeout(() => {
+      const fadeId = setTimeout(() => {
         setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, visible: false } : t)));
-        setTimeout(() => {
+        const removeId = setTimeout(() => {
           setToasts((prev) => prev.filter((t) => t.id !== id));
         }, 500);
+        timeoutIdsRef.current.push(removeId);
       }, 4000);
+      timeoutIdsRef.current.push(fadeId);
     }
-  }, [keyEvents, seenCount]);
+  }, [keyEvents]);
+
+  // Clear all pending timeouts when the component unmounts
+  useEffect(() => {
+    return () => {
+      for (const id of timeoutIdsRef.current) clearTimeout(id);
+    };
+  }, []);
 
   if (toasts.length === 0) return null;
 

@@ -29,6 +29,13 @@ export default function ToastNotificationStack() {
   const seenCountRef = useRef(0);
   // Track all scheduled timeout IDs so we can clear them on unmount
   const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const clearScheduledTimeouts = () => {
+    for (const id of timeoutIdsRef.current) clearTimeout(id);
+    timeoutIdsRef.current = [];
+  };
+  const releaseTimeoutId = (timeoutId: ReturnType<typeof setTimeout>) => {
+    timeoutIdsRef.current = timeoutIdsRef.current.filter((id) => id !== timeoutId);
+  };
 
   useEffect(() => {
     if (keyEvents.length <= seenCountRef.current) return;
@@ -40,10 +47,13 @@ export default function ToastNotificationStack() {
       setToasts((prev) => [{ id, event, visible: true }, ...prev].slice(0, 5));
 
       const fadeId = setTimeout(() => {
+        releaseTimeoutId(fadeId);
         setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, visible: false } : t)));
         const removeId = setTimeout(() => {
+          releaseTimeoutId(removeId);
           setToasts((prev) => prev.filter((t) => t.id !== id));
         }, 500);
+
         timeoutIdsRef.current.push(removeId);
       }, 4000);
       timeoutIdsRef.current.push(fadeId);
@@ -52,9 +62,7 @@ export default function ToastNotificationStack() {
 
   // Clear all pending timeouts when the component unmounts
   useEffect(() => {
-    return () => {
-      for (const id of timeoutIdsRef.current) clearTimeout(id);
-    };
+    return () => clearScheduledTimeouts();
   }, []);
 
   if (toasts.length === 0) return null;
@@ -75,9 +83,9 @@ export default function ToastNotificationStack() {
         <div
           key={toast.id}
           style={{
-            background: 'var(--bg-panel)',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.12)), var(--bg-panel)',
             border: `1px solid ${TYPE_COLORS[toast.event.type]}`,
-            borderRadius: 6,
+            borderRadius: 0,
             padding: '8px 12px',
             animation: toast.visible ? 'slideIn 0.25s ease' : 'fadeOut 0.4s ease forwards',
             display: 'flex',

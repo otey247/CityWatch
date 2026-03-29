@@ -33,7 +33,6 @@ export default function SummaryScreen() {
       alignItems: 'center',
     }}>
       <div style={{ maxWidth: 680, width: '100%' }}>
-        {/* Outcome header */}
         <div style={{
           textAlign: 'center',
           padding: '32px 0 24px',
@@ -50,7 +49,7 @@ export default function SummaryScreen() {
           }}>
             {outcome === 'victory' ? 'CONTAINED' : 'CITY LOST'}
           </div>
-          <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: 14, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
             {outcome === 'victory'
               ? 'The threat was identified and neutralized. The city endures.'
               : 'The city fell to chaos. The entity was never stopped.'}
@@ -60,7 +59,6 @@ export default function SummaryScreen() {
           </div>
         </div>
 
-        {/* Stats grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
           {[
             { label: 'Trust', value: `${Math.round(game.city.citywideTrust)}%`, color: game.city.citywideTrust > 50 ? 'var(--text-ok)' : 'var(--text-critical)' },
@@ -75,9 +73,8 @@ export default function SummaryScreen() {
           ))}
         </div>
 
-        {/* District outcomes */}
         <div className="panel" style={{ marginBottom: 20 }}>
-          <div className="panel-header"><span>District Fates</span></div>
+          <div className="panel-header"><span>District Fate Ledger</span></div>
           <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
             {districts.map(({ district, hint }) => {
               const hintColor =
@@ -101,9 +98,8 @@ export default function SummaryScreen() {
           </div>
         </div>
 
-        {/* Key events timeline */}
         <div className="panel" style={{ marginBottom: 24 }}>
-          <div className="panel-header"><span>Key Events</span></div>
+          <div className="panel-header"><span>Archive Timeline</span></div>
           <div style={{ padding: 8, maxHeight: 240, overflowY: 'auto' }}>
             {keyEvents.length === 0 ? (
               <div style={{ padding: 12, color: 'var(--text-muted)', fontSize: 12 }}>No notable events recorded.</div>
@@ -120,13 +116,12 @@ export default function SummaryScreen() {
           </div>
         </div>
 
-        {/* Restart */}
         <button
           className="btn btn-primary"
           onClick={handleRestart}
           style={{ width: '100%', padding: 14, fontSize: 14, justifyContent: 'center', textTransform: 'uppercase', letterSpacing: 4 }}
         >
-          ↺ New Run
+          Reopen Briefing
         </button>
       </div>
     </div>

@@ -2,19 +2,19 @@ import { useCityWatchStore } from '../../store/gameStore';
 import type { CommunicationActionType, TimeSpeed } from '../../types';
 import { COMM_TYPE_LABELS } from '../../data/cityData';
 
-const QUICK_ACTIONS: { type: CommunicationActionType; icon: string; label: string }[] = [
-  { type: 'district_alert', icon: '⚡', label: 'Alert' },
-  { type: 'targeted_text', icon: '✉', label: 'Text' },
-  { type: 'responder_tip', icon: '🚓', label: 'Tip' },
-  { type: 'transit_notice', icon: '🚌', label: 'Transit' },
-  { type: 'building_alarm', icon: '🔔', label: 'Alarm' },
+const QUICK_ACTIONS: { type: CommunicationActionType; code: string; label: string }[] = [
+  { type: 'district_alert', code: 'R-01', label: 'Review Alert' },
+  { type: 'targeted_text', code: 'R-02', label: 'Route Text' },
+  { type: 'responder_tip', code: 'R-03', label: 'Dispatch Tip' },
+  { type: 'transit_notice', code: 'R-04', label: 'Transit Notice' },
+  { type: 'building_alarm', code: 'R-05', label: 'Building Alarm' },
 ];
 
 const TIME_SPEEDS: { speed: TimeSpeed; label: string }[] = [
-  { speed: 'paused', label: '⏸' },
-  { speed: 'slow', label: '▶' },
-  { speed: 'normal', label: '▶▶' },
-  { speed: 'fast', label: '▶▶▶' },
+  { speed: 'paused', label: 'Hold' },
+  { speed: 'slow', label: 'Review' },
+  { speed: 'normal', label: 'Process' },
+  { speed: 'fast', label: 'Escalate' },
 ];
 
 export default function QuickActionBar() {
@@ -31,53 +31,58 @@ export default function QuickActionBar() {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      padding: '6px 12px',
-      background: 'var(--bg-elevated)',
-      borderTop: '1px solid var(--border)',
-      flexShrink: 0,
-      flexWrap: 'wrap',
-    }}>
-      <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 2, marginRight: 4 }}>
-        Actions
-      </span>
+    <div className="panel" style={{ flexShrink: 0 }}>
+      <div className="panel-header">
+        <span>Mechanical Command Console</span>
+        <span style={{ color: 'var(--text-muted)' }}>Target Sector: {selectedDistrictId ? districtsById[selectedDistrictId]?.name ?? selectedDistrictId : 'Unassigned'}</span>
+      </div>
 
-      {QUICK_ACTIONS.map((a) => (
-        <button
-          key={a.type}
-          className="btn btn-sm"
-          title={COMM_TYPE_LABELS[a.type]}
-          onClick={() => handleQuickAction(a.type)}
-        >
-          <span>{a.icon}</span>
-          <span>{a.label}</span>
-          {selectedDistrictId && (
-            <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-              ({districtsById[selectedDistrictId]?.name ?? selectedDistrictId})
-            </span>
-          )}
-        </button>
-      ))}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) auto',
+        gap: 10,
+        padding: 12,
+        alignItems: 'start',
+      }}>
+        <div className="control-plate">
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 8 }}>
+            Routing Buttons
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 8 }}>
+            {QUICK_ACTIONS.map((action) => (
+              <button
+                key={action.type}
+                className="btn"
+                title={COMM_TYPE_LABELS[action.type]}
+                onClick={() => handleQuickAction(action.type)}
+                style={{ flexDirection: 'column', alignItems: 'flex-start', minHeight: 58, padding: 8 }}
+              >
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-secondary)' }}>{action.code}</span>
+                <span style={{ fontSize: 11, lineHeight: 1.3, textAlign: 'left' }}>{action.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
-      <div style={{ flex: 1 }} />
-
-      <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 2 }}>
-        Speed
-      </span>
-      {TIME_SPEEDS.map((t) => (
-        <button
-          key={t.speed}
-          className={`btn btn-sm ${ui.timeSpeed === t.speed ? 'btn-primary' : ''}`}
-          onClick={() => setTimeSpeed(t.speed)}
-          title={t.speed}
-          style={{ minWidth: 36, fontFamily: 'var(--font-mono)', fontSize: 13 }}
-        >
-          {t.label}
-        </button>
-      ))}
+        <div className="control-plate" style={{ minWidth: 248 }}>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 8 }}>
+            Phase Selector
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8 }}>
+            {TIME_SPEEDS.map((time) => (
+              <button
+                key={time.speed}
+                className={`btn btn-sm ${ui.timeSpeed === time.speed ? 'btn-primary' : ''}`}
+                onClick={() => setTimeSpeed(time.speed)}
+                title={time.speed}
+                style={{ minWidth: 0 }}
+              >
+                {time.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

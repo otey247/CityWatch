@@ -49,7 +49,6 @@ export default function ToastNotificationStack() {
       const fadeId = setTimeout(() => {
         releaseTimeoutId(fadeId);
         setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, visible: false } : t)));
-
         const removeId = setTimeout(() => {
           releaseTimeoutId(removeId);
           setToasts((prev) => prev.filter((t) => t.id !== id));

@@ -1,73 +1,61 @@
-# React + TypeScript + Vite
+# CityWatch
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+CityWatch is a surveillance-horror strategy game where the player acts as a hidden observer monitoring a living city as a lethal entity begins to destabilize it.
 
-Currently, two official plugins are available:
+## Gameplay
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+You are **Observer**. You cannot directly control people or units. Instead, you must:
 
-## React Compiler
+- **Detect anomalies** through the live incident feed and city map
+- **Assess incomplete information** — not all signals are reliable
+- **Intervene indirectly** through communications, emergency warnings, and infrastructure influence
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Win / Lose
 
-## Expanding the ESLint configuration
+- **Victory** — Expose and neutralize the threat before the city collapses
+- **Failure** — Citywide panic exceeds 95%, public trust collapses, or 4+ districts fall to chaos
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Controls
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+| Action | How |
+|---|---|
+| Select district | Click district on the map |
+| Select incident | Click incident in the feed |
+| Send communication | Click any action button in the bottom bar |
+| Adjust time speed | ⏸ / ▶ / ▶▶ / ▶▶▶ buttons |
+| Resolve incident | Click "Mark Resolved" in the context panel |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## City Districts
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+The city has 6 districts: **Downtown**, **Midtown**, **Riverside**, **Old Port**, **Eastside**, and **Suburbs**. Each district has its own trust, panic, police presence, camera coverage, and infrastructure stability values. Panicking districts can spill over into adjacent ones.
+
+## Observer Tools
+
+- **District Alert** — Official emergency alert to a district
+- **Targeted Text** — Personal safety message to residents
+- **Responder Tip** — Direct police/medical to a suspected location
+- **Transit Notice** — Advisory for public transit systems
+- **Building Alarm** — Remote evacuation trigger
+- **Public Bulletin** — City-wide broadcast
+
+## Running Locally
+
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Then open [http://localhost:5173](http://localhost:5173).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Building for Production
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
 ```
+
+## Tech Stack
+
+- **React 19** + **TypeScript**
+- **Vite** (build / dev server)
+- **Zustand** (state management)
+- SVG city map with overlay modes

@@ -1,0 +1,62 @@
+/* CityWatch – surveillance-horror dark theme */
+:root {
+  --bg-base: #0a0c10;
+  --bg-surface: #10141c;
+  --bg-elevated: #161c26;
+  --bg-panel: #1a2030;
+  --border: #243040;
+  --border-bright: #3a4a60;
+  --text-primary: #c8d8e8;
+  --text-secondary: #7a9ab8;
+  --text-muted: #4a6278;
+  --text-critical: #ff4040;
+  --text-warning: #ffb040;
+  --text-ok: #40c880;
+  --accent: #4080c0;
+  --accent-dim: #204060;
+  --accent-hover: #60a0e0;
+  --font-mono: 'Courier New', 'Menlo', monospace;
+  --font-ui: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; overflow: hidden; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+.text-critical { color: var(--text-critical); }
+.text-warning  { color: var(--text-warning); }
+.text-ok       { color: var(--text-ok); }
+.text-muted    { color: var(--text-muted); }
+.text-mono     { font-family: var(--font-mono); }
+.badge { display: inline-flex; align-items: center; justify-content: center; padding: 1px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.badge-critical { background: #7a0020; color: #ff8090; }
+.badge-warning  { background: #4a2800; color: #ffb040; }
+.badge-ok       { background: #0a3020; color: #40c880; }
+.badge-info     { background: #0a2040; color: #60a0e0; }
+.badge-muted    { background: #1a2030; color: #7a9ab8; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 4px; border: 1px solid var(--border-bright); background: var(--bg-elevated); color: var(--text-primary); font-size: 13px; cursor: pointer; transition: background 0.15s, border-color 0.15s; white-space: nowrap; }
+.btn:hover { background: var(--bg-panel); border-color: var(--accent); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary { background: var(--accent-dim); border-color: var(--accent); color: #a0c8f0; }
+.btn-primary:hover { background: var(--accent); color: #fff; }
+.btn-danger { background: #400010; border-color: #802030; color: #ff8090; }
+.btn-danger:hover { background: #600020; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.panel { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 6px; }
+.panel-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--bg-elevated); border-radius: 6px 6px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); }
+.meter { height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden; }
+.meter-bar { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+.meter-trust .meter-bar { background: linear-gradient(to right, #1a6a3a, #40c880); }
+.meter-panic .meter-bar { background: linear-gradient(to right, #804000, #ff4040); }
+.meter-integrity .meter-bar { background: linear-gradient(to right, #204080, #4080c0); }
+.tabs { display: flex; gap: 2px; padding: 4px; background: var(--bg-base); border-radius: 5px; }
+.tab { flex: 1; padding: 5px 8px; text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; border-radius: 3px; cursor: pointer; color: var(--text-muted); border: none; background: transparent; transition: background 0.12s, color 0.12s; }
+.tab:hover { background: var(--bg-elevated); color: var(--text-secondary); }
+.tab.active { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border-bright); }
+select, input[type="text"], textarea { background: var(--bg-elevated); border: 1px solid var(--border-bright); border-radius: 4px; color: var(--text-primary); padding: 6px 10px; font-size: 13px; width: 100%; }
+select:focus, input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+@keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
